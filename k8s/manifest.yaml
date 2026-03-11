@@ -34,8 +34,8 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 5
         - name: app
-          image: alpacked/test-task
-          imagePullPolicy: Always
+          image: debug-task-app:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
           securityContext:
@@ -47,9 +47,6 @@ spec:
               mountPath: /app/data
             - name: debug-task-pvc
               mountPath: /uploads
-            - name: app-code
-              mountPath: /app/app.py
-              subPath: app.py
       volumes:
         - name: nginx-config
           configMap:
@@ -59,9 +56,6 @@ spec:
             claimName: debug-task-pvc
         - name: app-storage
           emptyDir: {}
-        - name: app-code
-          configMap:
-            name: app-code
 ---
 apiVersion: v1
 kind: ConfigMap
