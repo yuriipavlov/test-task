@@ -15,7 +15,7 @@ os.makedirs(os.path.dirname(db_path), exist_ok=True)
 def init_db():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE uploads (
+    cursor.execute('''CREATE TABLE IF NOT EXISTS uploads (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename TEXT NOT NULL,
         upload_time TEXT NOT NULL,
