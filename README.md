@@ -15,16 +15,16 @@
 
 ## Run
 
-**1. Build the app image** (from repo root):
+**1. Build the app image** (from repo root, use a version tag):
 
 ```bash
-docker build -t debug-task-app:latest ./app
+docker build -t debug-task-app:1.0.0 ./app
 ```
 
-**2. Load the image into the cluster (kind):**
+**2. Load the image into the cluster (kind, cluster name `alpacked`):**
 
 ```bash
-kind load docker-image debug-task-app:latest
+kind load docker-image debug-task-app:1.0.0 --name alpacked
 ```
 
 **3. Deploy:**
@@ -51,4 +51,4 @@ curl -X POST -F "file=@anotherfile.txt" http://localhost:8080/upload
 curl http://localhost:8080/uploads/anotherfile.txt
 ```
 
-The manifest uses `image: debug-task-app:latest`; the same tag is used in step 1.
+The manifest uses `image: debug-task-app:1.0.0`. Use the same tag when building; bump the version in both manifest and build when releasing.

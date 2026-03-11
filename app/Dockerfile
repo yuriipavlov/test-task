@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.14.3-slim-bookworm
 
 RUN useradd -u 101 -m -s /bin/sh appuser
 
