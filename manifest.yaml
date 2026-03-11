@@ -79,7 +79,7 @@ metadata:
   name: debug-task-service
 spec:
   selector:
-    app: debug-task-service
+    app: debug-task-app
   ports:
     - protocol: TCP
       port: 8081
@@ -95,4 +95,3 @@ spec:
   resources:
     requests:
       storage: 1Gi
- 
