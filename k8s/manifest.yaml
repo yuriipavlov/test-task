@@ -38,6 +38,14 @@ spec:
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            failureThreshold: 3
           resources:
             requests:
               cpu: "100m"
@@ -94,10 +102,18 @@ spec:
               mountPath: /uploads
           livenessProbe:
             httpGet:
-              path: /health
+              path: /ready
               port: 8081
             initialDelaySeconds: 5
             periodSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            failureThreshold: 3
           resources:
             requests:
               cpu: "100m"
@@ -124,6 +140,11 @@ data:
     server {
         listen 8081;
         root /;
+
+        location = /ready {
+            return 200 'ok';
+            add_header Content-Type text/plain;
+        }
 
         location / {
             proxy_pass http://debug-task-app:8080;
