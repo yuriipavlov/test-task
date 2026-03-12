@@ -1,17 +1,18 @@
 from flask import Flask, request
+from werkzeug.utils import secure_filename
 import os
 import mimetypes
 import sqlite3
 import time
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "/uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db_path = "/app/data/uploads.db"
 os.makedirs(os.path.dirname(db_path), exist_ok=True)
 
-# Initialize the SQLite database
 def init_db():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -23,6 +24,8 @@ def init_db():
     )''')
     conn.commit()
     conn.close()
+
+init_db()
 
 @app.route('/health')
 def health():
@@ -36,8 +39,10 @@ def upload_file():
     if file.filename == '':
         return 'No selected file', 400
 
-    # Determine file path and save it
-    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    filename = secure_filename(file.filename)
+    if not filename:
+        return 'Invalid filename', 400
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
     file.save(file_path)
 
     # Set file permissions
@@ -47,16 +52,14 @@ def upload_file():
     mime_type = mimetypes.guess_type(file_path)[0] or 'unknown'
     print(f"MIME type: {mime_type}")
 
-    # Store metadata in the database
-    init_db()
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('''INSERT INTO uploads (filename, upload_time, mime_type) VALUES (?, ?, ?)''',
-                   (file.filename, time.strftime('%Y-%m-%d %H:%M:%S'), mime_type))
+                   (filename, time.strftime('%Y-%m-%d %H:%M:%S'), mime_type))
     conn.commit()
     conn.close()
 
-    return f'File {file.filename} uploaded successfully', 200
+    return f'File {filename} uploaded successfully', 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

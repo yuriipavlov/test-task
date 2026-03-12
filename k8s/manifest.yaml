@@ -1,0 +1,209 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: debug-task
+  labels:
+    app: debug-task-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-task-app
+  namespace: debug-task
+  labels:
+    app: debug-task-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-task-app
+  template:
+    metadata:
+      labels:
+        app: debug-task-app
+    spec:
+      securityContext:
+        fsGroup: 101
+      containers:
+        - name: app
+          image: debug-task-app:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          securityContext:
+            runAsUser: 101
+            runAsGroup: 101
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: app-storage
+              mountPath: /app/data
+            - name: uploads
+              mountPath: /uploads
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+      volumes:
+        - name: app-storage
+          emptyDir: {}
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: debug-task-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: debug-task-app
+  namespace: debug-task
+  labels:
+    app: debug-task-app
+spec:
+  selector:
+    app: debug-task-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-task-nginx
+  namespace: debug-task
+  labels:
+    app: debug-task-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-task-nginx
+  template:
+    metadata:
+      labels:
+        app: debug-task-nginx
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: debug-task-app
+              topologyKey: kubernetes.io/hostname
+      securityContext:
+        fsGroup: 101
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.29.5-alpine3.23
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+          ports:
+            - containerPort: 8081
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+            - name: uploads
+              mountPath: /uploads
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: debug-task-pvc
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: debug-task
+  labels:
+    app: debug-task-nginx
+data:
+  default.conf: |
+    server {
+        listen 8081;
+        root /;
+
+        location = /ready {
+            return 200 'ok';
+        }
+
+        location / {
+            proxy_pass http://debug-task-app:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        location /uploads/ {
+            try_files $uri =404;
+        }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: debug-task-service
+  namespace: debug-task
+  labels:
+    app: debug-task-app
+spec:
+  selector:
+    app: debug-task-nginx
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: debug-task-pvc
+  namespace: debug-task
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
