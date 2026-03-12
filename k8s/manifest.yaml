@@ -64,6 +64,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: debug-task-app
+  labels:
+    app: debug-task-app
 spec:
   selector:
     app: debug-task-app
@@ -162,6 +164,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: debug-task-service
+  labels:
+    app: debug-task-app
 spec:
   selector:
     app: debug-task-nginx
