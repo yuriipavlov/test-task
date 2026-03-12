@@ -31,10 +31,10 @@ kind load docker-image debug-task-app:1.0.0 --name alpacked
 
 ```bash
 kubectl apply -f k8s/manifest.yaml
-kubectl get pods -l app=debug-task-app
+kubectl get pods
 ```
 
-Wait until pod is `READY 2/2`.
+Wait until both deployments have pods `READY 1/1` (debug-task-app and debug-task-nginx).
 
 **4. Port-forward** (leave running in one terminal):
 
