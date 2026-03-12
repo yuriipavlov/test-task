@@ -35,6 +35,7 @@ spec:
             runAsUser: 101
             runAsGroup: 101
             runAsNonRoot: true
+            allowPrivilegeEscalation: false
           volumeMounts:
             - name: app-storage
               mountPath: /app/data
@@ -100,11 +101,21 @@ spec:
       labels:
         app: debug-task-nginx
     spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: debug-task-app
+              topologyKey: kubernetes.io/hostname
       securityContext:
         fsGroup: 101
       containers:
         - name: nginx
           image: nginxinc/nginx-unprivileged:1.29.5-alpine3.23
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
           ports:
             - containerPort: 8081
           volumeMounts:
@@ -156,7 +167,6 @@ data:
 
         location = /ready {
             return 200 'ok';
-            add_header Content-Type text/plain;
         }
 
         location / {

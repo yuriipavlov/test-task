@@ -6,8 +6,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py .
 RUN mkdir -p /app/data && chown -R 101:101 /app
+COPY --chown=101:101 app.py .
 
 USER 101
 EXPOSE 8080
