@@ -1,8 +1,16 @@
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: debug-task
+  labels:
+    app: debug-task-app
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: debug-task-app
+  namespace: debug-task
   labels:
     app: debug-task-app
 spec:
@@ -64,6 +72,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: debug-task-app
+  namespace: debug-task
   labels:
     app: debug-task-app
 spec:
@@ -78,6 +87,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: debug-task-nginx
+  namespace: debug-task
   labels:
     app: debug-task-nginx
 spec:
@@ -135,6 +145,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx-config
+  namespace: debug-task
   labels:
     app: debug-task-nginx
 data:
@@ -164,6 +175,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: debug-task-service
+  namespace: debug-task
   labels:
     app: debug-task-app
 spec:
@@ -178,6 +190,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: debug-task-pvc
+  namespace: debug-task
 spec:
   accessModes:
     - ReadWriteOnce

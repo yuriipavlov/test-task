@@ -27,11 +27,11 @@ docker build -t debug-task-app:1.0.0 ./app
 kind load docker-image debug-task-app:1.0.0 --name alpacked
 ```
 
-**3. Deploy:**
+**3. Deploy** (resources go to namespace `debug-task`):
 
 ```bash
 kubectl apply -f k8s/manifest.yaml
-kubectl get pods
+kubectl get pods -n debug-task
 ```
 
 Wait until both deployments have pods `READY 1/1` (debug-task-app and debug-task-nginx).
@@ -39,7 +39,7 @@ Wait until both deployments have pods `READY 1/1` (debug-task-app and debug-task
 **4. Port-forward** (leave running in one terminal):
 
 ```bash
-kubectl port-forward svc/debug-task-service 8080:8081
+kubectl port-forward svc/debug-task-service 8080:8081 -n debug-task
 ```
 
 **5. Test** (in another terminal, from repo root so `anyfile.txt` / `anotherfile.txt` are found):
